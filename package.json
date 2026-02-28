@@ -5,7 +5,7 @@
   "type": "module",
   "private": false,
   "bin": {
-    "feishu_agent": "./src/index.ts"
+    "feishu_agent": "src/index.ts"
   },
   "scripts": {
     "test": "bun test",
