@@ -5,9 +5,10 @@ Feishu Agent is a TypeScript/Node.js middleware layer for Feishu (Lark) API inte
 ## Features
 
 - 📅 Calendar management (list calendars, events, create/delete events)
+- ⚠️ **Automatic conflict detection** when creating events (uses FreeBusy API)
 - ✅ Todo management via Bitable
 - 👥 Contact management (list users, search by name/email)
-- 🔐 OAuth 2.0 authentication support
+- 🔐 OAuth 2.0 authentication with auto token refresh
 - 🚀 CLI interface with commander
 
 ## Installation
@@ -71,7 +72,7 @@ feishu_agent calendar list
 # List events
 feishu_agent calendar events
 
-# Create event
+# Create event (automatically checks for time conflicts)
 feishu_agent calendar create --summary "Meeting" --start "2026-03-01 14:00" --end "2026-03-01 15:00"
 
 # Create event with attendees
@@ -172,6 +173,8 @@ Global config is stored at `~/.feishu-agent/config.json`:
   "refreshToken": "xxx"
 }
 ```
+
+**Note:** User access tokens are automatically refreshed when expired. Just run `feishu_agent auth` again if the refresh token expires.
 
 ## License
 
