@@ -27,8 +27,10 @@ export function createCalendarCommands(program: Command, config: FeishuConfig) {
     .command("events")
     .description("List events in a calendar")
     .option("--calendar-id <string>", "Specify calendar ID")
+    .option("--start <string>", "Filter events starting after this time")
+    .option("--end <string>", "Filter events ending before this time")
     .action(async (options: CalendarOptions) => {
-      await handleListEvents(config, options.calendarId);
+      await handleListEvents(config, options.calendarId, options.start, options.end);
     });
 
   program
@@ -116,7 +118,7 @@ async function handleListCalendars(config: FeishuConfig) {
   }
 }
 
-async function handleListEvents(config: FeishuConfig, calendarId?: string) {
+async function handleListEvents(config: FeishuConfig, calendarId?: string, timeMin?: string, timeMax?: string) {
   if (!config.appId || !config.appSecret || !config.userAccessToken) {
     console.error("Error: Authorization required. Run 'feishu-agent auth'.");
     process.exit(1);
@@ -142,7 +144,10 @@ async function handleListEvents(config: FeishuConfig, calendarId?: string) {
   console.log(`\n📅 Events\n`);
   console.log("=".repeat(60));
 
-  const events = await calendarManager.listEvents(calendarId);
+  const events = await calendarManager.listEvents(calendarId, {
+    startTime: timeMin,
+    endTime: timeMax,
+  });
   if (!events.items || events.items.length === 0) {
     console.log("No events found.");
     return;
