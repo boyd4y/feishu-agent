@@ -178,7 +178,7 @@ export class CalendarManager {
             user_id: id,
           })),
         },
-        { user_id_type: "union_id" }
+        {} // No user_id_type param for attendees API
       );
     }
 
