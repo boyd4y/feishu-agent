@@ -19,7 +19,7 @@ Different Feishu APIs require different ID types:
 | API | Required ID Type | Notes |
 |-----|------------------|-------|
 | **Calendar - Create Event** | `union_id` | Use `user_id_type: "union_id"` query param |
-| **Calendar - Add Attendees** | `open_id` | Must use `open_id` in `user_id` field! |
+| **Calendar - Add Attendees** | `open_id` | Two-step: create event first, then add attendees |
 | **Calendar - FreeBusy** | `union_id` | Use `user_id_type: "union_id"` query param |
 | **Contact - List Users** | Returns all three | Request with `user_id_type: "union_id"` |
 | **Auth - User Info** | Returns all three | `/open-apis/authen/v1/user_info` |
