@@ -121,20 +121,20 @@ export async function loadContactCache(): Promise<Record<string, ContactCacheEnt
 /**
  * Searches cached contacts by name or email.
  */
-export async function searchContactCache(query: string): Promise<{ union_id: string; user_id?: string; name: string; email?: string }[]> {
+export async function searchContactCache(query: string): Promise<{ union_id: string; user_id?: string; open_id?: string; name: string; email?: string }[]> {
   const cache = await loadContactCache();
 
   if (!query) return [];
 
   const lowerQuery = query.toLowerCase();
 
-  const results: { union_id: string; user_id?: string; name: string; email?: string }[] = [];
+  const results: { union_id: string; user_id?: string; open_id?: string; name: string; email?: string }[] = [];
   for (const [unionId, entry] of Object.entries(cache)) {
     if (
       entry.name.toLowerCase().includes(lowerQuery) ||
       (entry.email && entry.email.toLowerCase() === lowerQuery)
     ) {
-      results.push({ union_id: unionId, user_id: entry.user_id, name: entry.name, email: entry.email });
+      results.push({ union_id: unionId, user_id: entry.user_id, open_id: entry.open_id, name: entry.name, email: entry.email });
     }
   }
   return results;
