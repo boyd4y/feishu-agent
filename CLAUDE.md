@@ -84,3 +84,18 @@ Key rules:
 2. Calendar Create Event: use `union_id` with `user_id_type: "union_id"` param
 3. Calendar Add Attendees: **must use `open_id`** in the `user_id` field
 4. Error messages mentioning "invalid union_id" often mean "wrong ID type"
+
+## Skill Release (clawhub)
+
+**Important:** This skill is published to clawhub as **documentation only** (no source code). Users run the skill via `bunx @teamclaw/feishu-agent`.
+
+### Release Flow
+
+1. Update version in `skills/feishu-agent/SKILL.md` frontmatter
+2. Run publish script: `./scripts/publish.sh`
+
+### skills/feishu-agent/ Folder
+
+Contains only `SKILL.md` with YAML frontmatter metadata. No source code or binary is included.
+
+See `docs/PUBLISH.md` for detailed publishing guide.
