@@ -1,6 +1,6 @@
 {
   "name": "@teamclaw/feishu-agent",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Feishu Agent CLI for AI assistants",
   "type": "module",
   "private": false,
