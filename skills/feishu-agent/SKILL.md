@@ -1,7 +1,7 @@
 ---
 name: feishu-agent
 description: Feishu (Lark) CLI agent - Provides calendar, todo, and contact management capabilities for AI assistants
-version: 1.0.13
+version: 1.0.14
 metadata:
   openclaw:
     requires:
