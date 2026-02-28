@@ -164,6 +164,7 @@ export class CalendarManager {
       body.attendees = event.attendeeOpenIds.map(id => ({
         type: "user",
         user_id: id,
+        user_id_type: "open_id",
       }));
     }
 
