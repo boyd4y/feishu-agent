@@ -18,7 +18,7 @@ skills/feishu-agent/
 ```yaml
 ---
 name: feishu-agent
-description: MCP Agent for Feishu (Lark) integration
+description: Feishu (Lark) CLI agent
 version: 1.0.12
 metadata:
   openclaw:

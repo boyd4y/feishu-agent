@@ -20,7 +20,7 @@ bun build ./src/cli/index.ts --compile --outfile=feishu-agent
 
 ## Architecture Overview
 
-**Feishu Agent** is a TypeScript/Node.js middleware layer for Feishu (Lark) API integration, designed for AI agents via MCP protocol.
+**Feishu Agent** is a TypeScript/Node.js middleware layer for Feishu (Lark) API integration, designed for AI assistants.
 
 ### Layer Structure
 

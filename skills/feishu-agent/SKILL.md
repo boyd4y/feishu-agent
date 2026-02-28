@@ -1,7 +1,7 @@
 ---
 name: feishu-agent
-description: MCP Agent for Feishu (Lark) integration - Provides calendar, todo, and contact management capabilities for AI assistants
-version: 1.0.12
+description: Feishu (Lark) CLI agent - Provides calendar, todo, and contact management capabilities for AI assistants
+version: 1.0.13
 metadata:
   openclaw:
     requires:
@@ -11,7 +11,7 @@ metadata:
 
 # Feishu Agent Skill
 
-**MCP Agent for Feishu (Lark) integration** - Provides calendar, todo, and contact management capabilities for AI assistants.
+**Feishu (Lark) CLI agent** - Provides calendar, todo, and contact management capabilities for AI assistants.
 
 ## Installation
 
