@@ -1,11 +1,17 @@
 {
   "name": "@teamclaw/feishu-agent",
-  "module": "index.ts",
+  "version": "1.0.0",
+  "description": "Feishu Agent CLI for AI assistants",
   "type": "module",
   "private": false,
+  "bin": {
+    "feishu_agent": "./src/index.ts"
+  },
   "scripts": {
     "test": "bun test",
-    "start:mcp": "bun run src/mcp/server.ts"
+    "start:mcp": "bun run src/mcp/server.ts",
+    "start": "bun run src/index.ts",
+    "build": "bun build ./src/index.ts --compile --outfile=feishu_agent"
   },
   "devDependencies": {
     "@types/bun": "latest"
@@ -17,5 +23,27 @@
     "@modelcontextprotocol/sdk": "^1.27.1",
     "commander": "^14.0.3",
     "zod": "^4.3.6"
-  }
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "keywords": [
+    "feishu",
+    "lark",
+    "mcp",
+    "ai",
+    "assistant",
+    "calendar",
+    "todo",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/teamclaw/feishu-agent.git"
+  },
+  "license": "MIT"
 }

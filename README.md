@@ -1,96 +1,178 @@
-# Feishu Agent (OpenCode Middleware)
+# Feishu Agent
 
-A high-performance, dependency-free Feishu (Lark) integration layer built with [Bun](https://bun.sh). designed for AI Agents (MCP, OpenClaw).
+Feishu Agent is a TypeScript/Node.js middleware layer for Feishu (Lark) API integration, designed for AI agents via MCP protocol.
 
-## 🚀 Features
+## Features
 
-- **Zero-Dependency Core**: Pure TypeScript implementation using native `fetch`.
-- **Onion Architecture**: Clean separation between Core logic, Protocol adaptors, and Interfaces.
-- **Introspection Engine**: Automatically "sniffs" Feishu Base tables and fields to generate schema.
-- **CLI Tool**: Built-in command-line interface for easy initialization.
-- **MCP Server**: (Coming Soon) Standard Model Context Protocol server.
+- 📅 Calendar management (list calendars, events, create/delete events)
+- ✅ Todo management via Bitable
+- 👥 Contact management (list users, search by name/email)
+- 🔐 OAuth 2.0 authentication support
+- 🚀 CLI interface with commander
 
-## 📦 Prerequisites
+## Installation
 
-- [Bun](https://bun.sh) v1.0+
-
-## 🛠️ Installation
+### Global Install (Recommended)
 
 ```bash
-# Install dependencies
+bun add -g @teamclaw/feishu-agent
+```
+
+After installation, you can use the `feishu_agent` command directly:
+
+```bash
+feishu_agent calendar list
+```
+
+### Run with bunx (No Install)
+
+```bash
+bunx @teamclaw/feishu-agent calendar list
+```
+
+### Local Development
+
+```bash
 bun install
 ```
 
-## 💻 CLI Usage
+## Quick Start
 
-The agent comes with a CLI to initialize your configuration from a Feishu Base.
+### 1. Setup
 
-### Initialize from URL
-This command fetches the schema (tables/fields) from a Feishu Base and generates `.feishu_agent/schema.json` and `.env`.
+Run the setup command to configure your Feishu app credentials:
 
 ```bash
-bun run src/cli/index.ts init https://your-domain.feishu.cn/base/basexxxxxxxx
+feishu_agent setup
 ```
 
-**What happens:**
-1. Parses the Base Token from the URL.
-2. Prompts for `App ID` and `App Secret` (if not in env).
-3. Fetches all tables and fields.
-4. Saves schema to `.feishu_agent/schema.json`.
+Or export environment variables:
+```bash
+export FEISHU_APP_ID=cli_xxx
+export FEISHU_APP_SECRET=xxx
+```
 
-## 🧪 Development
-
-### Running Tests
-We use `bun:test` for high-performance unit testing.
+### 2. Authenticate
 
 ```bash
-# Run all tests
+feishu_agent auth
+```
+
+This will open a browser window for OAuth 2.0 authorization.
+
+## Usage
+
+### Calendar
+
+```bash
+# List calendars
+feishu_agent calendar list
+
+# List events
+feishu_agent calendar events
+
+# Create event
+feishu_agent calendar create --summary "Meeting" --start "2026-03-01 14:00" --end "2026-03-01 15:00"
+
+# Create event with attendees
+feishu_agent calendar create --summary "Meeting" --start "2026-03-01 14:00" --end "2026-03-01 15:00" --attendee-name "张三"
+
+# Delete event
+feishu_agent calendar delete --event-id "xxx"
+```
+
+### Todo
+
+```bash
+# List todos (requires FEISHU_BASE_TOKEN env)
+feishu_agent todo list
+
+# Create todo
+feishu_agent todo create --title "Task" --priority "High"
+
+# Mark todo as done
+feishu_agent todo done --record-id "xxx"
+```
+
+### Contact
+
+```bash
+# List users
+feishu_agent contact list --dept "0"
+
+# Search users
+feishu_agent contact search "张三"
+```
+
+### Configuration
+
+```bash
+# Set config
+feishu_agent config set appId cli_xxx
+
+# Get config
+feishu_agent config get appId
+
+# List all config
+feishu_agent config list
+```
+
+## Commands
+
+```
+feishu_agent <command> [options]
+
+Commands:
+  setup                 Initialize configuration
+  auth                  Authenticate with Feishu OAuth
+  whoami                Show current user info
+  config                Manage configuration
+  calendar              Manage calendar events
+  todo                  Manage todos
+  contact               Manage contacts
+```
+
+## Build
+
+```bash
+# Build binary
+bun run build
+```
+
+## Test
+
+```bash
 bun test
-
-# Run specific test file
-bun test test/core/auth-manager.test.ts
 ```
 
-### Building Binary
-Compile the project into a single executable binary:
-
-```bash
-bun build ./src/cli/index.ts --compile --outfile=feishu-agent
-```
-
-You can then run it directly:
-```bash
-./feishu-agent init <url>
-```
-
-## 📂 Project Structure
+## Architecture
 
 ```
 src/
-├── core/           # Pure business logic (No external deps)
-│   ├── client.ts       # HTTP Client wrapper
+├── core/           # Business logic - Feishu API wrappers
+│   ├── client.ts       # HTTP client with auth
 │   ├── auth-manager.ts # Token lifecycle management
-│   └── introspection.ts# Schema fetching engine
-├── cli/            # Command Line Interface
-│   ├── index.ts        # Entry point
-│   └── commands/       # Command implementations
-├── types/          # Shared TypeScript interfaces
-└── protocol/       # (Future) Protocol adaptors
+│   ├── config.ts       # Global config management
+│   ├── calendar.ts     # Calendar API
+│   ├── contact.ts      # Contact API
+│   └── todo.ts         # Bitable Todo API
+├── index.ts        # Main entry point with CLI router
+└── types/          # TypeScript interfaces
 ```
 
-## 📄 License
+## Configuration
+
+Global config is stored at `~/.feishu-agent/config.json`:
+
+```json
+{
+  "appId": "cli_xxx",
+  "appSecret": "xxx",
+  "userAccessToken": "xxx",
+  "refreshToken": "xxx"
+}
+```
+
+## License
+
 MIT
-
-To install dependencies:
-
-```bash
-bun install
-```
-
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.2.7. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
