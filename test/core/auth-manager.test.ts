@@ -138,4 +138,135 @@ describe("AuthManager", () => {
     await expect(authManager.getTenantAccessToken()).rejects.toThrow(FeishuError);
     await expect(authManager.getTenantAccessToken()).rejects.toThrow("Auth request failed: Internal Server Error");
   });
+
+  describe("User Token (refresh_token flow)", () => {
+    const userConfig = {
+      appId: "test-app-id",
+      appSecret: "test-app-secret",
+      userAccessToken: "old-user-token",
+      refreshToken: "valid-refresh-token",
+    };
+
+    let authManager: AuthManager;
+
+    beforeEach(() => {
+      authManager = new AuthManager(userConfig);
+    });
+
+    afterEach(() => {
+      mock.restore();
+    });
+
+    it("should refresh user token when expired on first use", async () => {
+      const mockRefreshResponse = {
+        code: 0,
+        msg: "ok",
+        data: {
+          access_token: "new-user-token",
+          refresh_token: "new-refresh-token",
+          token_type: "Bearer",
+          expires_in: 7200,
+          name: "Test User",
+          en_name: "Test",
+          avatar: "https://example.com/avatar.png",
+          user_id: "test-user-id",
+          union_id: "test-union-id",
+        },
+      };
+
+      global.fetch = mock(() =>
+        Promise.resolve(new Response(JSON.stringify(mockRefreshResponse), { status: 200 }))
+      );
+
+      const token = await authManager.getUserAccessToken();
+
+      expect(token).toBe("new-user-token");
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+
+      const fetchCall = (global.fetch as any).mock.calls[0];
+      expect(fetchCall[0]).toBe("https://open.feishu.cn/open-apis/authen/v1/refresh_access_token");
+      const body = JSON.parse(fetchCall[1].body);
+      expect(body.grant_type).toBe("refresh_token");
+      expect(body.refresh_token).toBe("valid-refresh-token");
+      expect(body.app_id).toBe(userConfig.appId);
+      expect(body.app_secret).toBe(userConfig.appSecret);
+    });
+
+    it("should return cached user token if not expired", async () => {
+      const mockRefreshResponse = {
+        code: 0,
+        msg: "ok",
+        data: {
+          access_token: "fresh-token",
+          refresh_token: "new-refresh-token",
+          token_type: "Bearer",
+          expires_in: 7200,
+          name: "Test User",
+          en_name: "Test",
+          avatar: "https://example.com/avatar.png",
+          user_id: "test-user-id",
+          union_id: "test-union-id",
+        },
+      };
+
+      let callCount = 0;
+      global.fetch = mock(() => {
+        callCount++;
+        return Promise.resolve(new Response(JSON.stringify(mockRefreshResponse), { status: 200 }));
+      });
+
+      const startTime = 1000000;
+      dateNowSpy.mockReturnValue(startTime);
+
+      // First call - should refresh (since expireTime=0 initially)
+      const token1 = await authManager.getUserAccessToken();
+      expect(token1).toBe("fresh-token");
+      expect(callCount).toBe(1);
+
+      // Second call within valid time (before expires_in - 300s buffer)
+      // expires_in=7200s, buffer=300s, so valid for 6900s
+      dateNowSpy.mockReturnValue(startTime + 1000); // 1 second later
+      const token2 = await authManager.getUserAccessToken();
+
+      expect(token2).toBe("fresh-token");
+      expect(callCount).toBe(1); // Should not call fetch again
+    });
+
+    it("should throw FeishuError if refresh_token is not provided", async () => {
+      // Note: AuthManager constructor requires both userAccessToken AND refreshToken
+      // If either is missing, userToken is not initialized and "User access token not configured" is thrown
+      const noRefreshConfig = {
+        appId: "test-app-id",
+        appSecret: "test-app-secret",
+        userAccessToken: "some-token",
+        // No refreshToken - constructor will not initialize userToken
+      };
+
+      authManager = new AuthManager(noRefreshConfig);
+
+      await expect(authManager.getUserAccessToken()).rejects.toThrow(FeishuError);
+      await expect(authManager.getUserAccessToken()).rejects.toThrow("User access token not configured");
+    });
+
+    it("should throw FeishuError if refresh API returns error", async () => {
+      const mockRefreshResponse = {
+        code: 99991661,
+        msg: "refresh token has expired",
+      };
+
+      global.fetch = mock(() =>
+        Promise.resolve(new Response(JSON.stringify(mockRefreshResponse), { status: 200 }))
+      );
+
+      await expect(authManager.getUserAccessToken()).rejects.toThrow(FeishuError);
+      await expect(authManager.getUserAccessToken()).rejects.toThrow("Failed to refresh user token: refresh token has expired");
+    });
+
+    it("should not refresh if user token not configured", async () => {
+      authManager = new AuthManager(config); // No user tokens
+
+      await expect(authManager.getUserAccessToken()).rejects.toThrow(FeishuError);
+      await expect(authManager.getUserAccessToken()).rejects.toThrow("User access token not configured");
+    });
+  });
 });

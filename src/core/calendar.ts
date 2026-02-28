@@ -143,9 +143,15 @@ export class CalendarManager {
       startTime: CalendarTime;
       endTime: CalendarTime;
       attendeeUserIds?: string[];
+      checkConflict?: boolean; // Whether to check for time conflicts
     }
   ): Promise<CalendarEvent> {
-    // Step 1: Create the event
+    // Step 1: Check for time conflicts if requested
+    if (event.checkConflict !== false) {
+      await this.checkTimeConflict(event.startTime, event.endTime);
+    }
+
+    // Step 2: Create the event
     const body: Record<string, any> = {
       summary: event.summary,
       description: event.description,
@@ -220,6 +226,52 @@ export class CalendarManager {
       true // useUserToken = true
     );
     return res;
+  }
+
+  /**
+   * Check if there is a time conflict for the current user
+   */
+  private async checkTimeConflict(
+    startTime: CalendarTime,
+    endTime: CalendarTime
+  ): Promise<void> {
+    // Get current user ID from token
+    const currentUser = await this.client.getCurrentUser();
+    if (!currentUser?.user_id) {
+      // If we can't get user info, skip conflict check
+      return;
+    }
+
+    // Convert timestamp to RFC3339 format if needed
+    const timeMin = this.toRFC3339(startTime);
+    const timeMax = this.toRFC3339(endTime);
+
+    const freeBusy = await this.getUserFreeBusy(currentUser.user_id, timeMin, timeMax);
+
+    // Check if there are any busy slots
+    if (freeBusy.freebusy_list && freeBusy.freebusy_list.length > 0) {
+      const conflicts = freeBusy.freebusy_list.map(
+        (slot) => `${new Date(slot.start_time).toLocaleString()} - ${new Date(slot.end_time).toLocaleString()}`
+      );
+      throw new Error(
+        `Time conflict detected. The following time slots are already busy:\n` +
+        `  ${conflicts.join("\n  ")}`
+      );
+    }
+  }
+
+  /**
+   * Convert CalendarTime to RFC3339 format
+   */
+  private toRFC3339(time: CalendarTime): string {
+    if (time.timestamp) {
+      const date = new Date(parseInt(time.timestamp) * 1000);
+      return date.toISOString();
+    }
+    if (time.date) {
+      return time.date;
+    }
+    return new Date().toISOString();
   }
 
   /**

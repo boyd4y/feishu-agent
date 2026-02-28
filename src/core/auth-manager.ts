@@ -14,12 +14,13 @@ export class AuthManager {
 
   constructor(config: FeishuConfig) {
     this.config = config;
-    // If userAccessToken is provided, use it directly (will be refreshed if expired)
-    if (config.userAccessToken) {
+    // If userAccessToken and refreshToken are provided, store them
+    // Token will be refreshed on first use if expired
+    if (config.userAccessToken && config.refreshToken) {
       this.userToken = {
         accessToken: config.userAccessToken,
-        refreshToken: config.refreshToken || "",
-        expireTime: Date.now() + (2 * 60 * 60 * 1000), // Default 2 hours if not expired
+        refreshToken: config.refreshToken,
+        expireTime: 0, // Mark as expired to force refresh on first use
       };
     }
   }
@@ -136,7 +137,7 @@ export class AuthManager {
     }
   }
 
-  private async refreshToken(): Promise<UserToken> {
+  private async refreshUserToken(): Promise<UserToken> {
     if (!this.userToken?.refreshToken) {
       throw new FeishuError("Refresh token not available", 401);
     }

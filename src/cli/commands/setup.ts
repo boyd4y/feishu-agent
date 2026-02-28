@@ -2,7 +2,7 @@
 import { parseArgs } from "node:util";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { exec } from "node:child_process";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile } from "fs/promises";
 import { loadConfig, saveGlobalConfig } from "../../core/config";
 import { FeishuClient } from "../../core/client";
 import { IntrospectionEngine } from "../../core/introspection";
@@ -169,17 +169,13 @@ export async function setupCommand() {
   console.log(`  Name:     ${name}`);
   console.log("");
 
-  // Save tokens to local config
-  await mkdir(".feishu_agent", { recursive: true });
-  await writeFile(".feishu_agent/config.json", JSON.stringify({
-    appId,
-    appSecret,
+  // Save tokens to global config
+  await saveGlobalConfig({
     userAccessToken: access_token,
     refreshToken: refresh_token,
-    userId: user_id,
-  }, null, 2));
+  });
 
-  console.log("Configuration saved to .feishu_agent/config.json\n");
+  console.log("Configuration saved to ~/.feishu-agent/config.json\n");
 
   // Step 3: Get Base Token for Bitable
   console.log("Step 3: Feishu Bitable (多维表格)");
