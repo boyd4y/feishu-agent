@@ -142,7 +142,7 @@ export class CalendarManager {
       description?: string;
       startTime: CalendarTime;
       endTime: CalendarTime;
-      attendeeOpenIds?: string[]; // open_ids for attendees
+      attendeeUserIds?: string[]; // union_ids for attendees
       checkConflict?: boolean; // Whether to check for time conflicts
     }
   ): Promise<CalendarEvent> {
@@ -169,17 +169,17 @@ export class CalendarManager {
     const createdEvent = res.event;
 
     // Step 3: Add attendees using separate API call
-    if (event.attendeeOpenIds && event.attendeeOpenIds.length > 0) {
+    if (event.attendeeUserIds && event.attendeeUserIds.length > 0) {
       await this.client.post(
         `/open-apis/calendar/v4/calendars/${calendarId}/events/${createdEvent.event_id}/attendees`,
         {
-          attendees: event.attendeeOpenIds.map(id => ({
+          attendees: event.attendeeUserIds.map(id => ({
             type: "user",
             user_id: id,
           })),
           need_notification: true,
         },
-        {} // No user_id_type for attendees API
+        { user_id_type: "union_id" } // Explicitly specify union_id
       );
     }
 
