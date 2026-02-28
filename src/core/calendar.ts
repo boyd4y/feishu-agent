@@ -1,0 +1,276 @@
+import { FeishuClient } from "./client";
+import {
+  CalendarEvent,
+  ListCalendarsResponse,
+  ListEventsResponse,
+  CreateEventResponse,
+  CalendarTime,
+  CalendarAttendee,
+  CreateCalendarPayload,
+  CreateCalendarResponse,
+  FreeBusyResponse,
+} from "../types";
+
+export class CalendarManager {
+  private client: FeishuClient;
+
+  constructor(client: FeishuClient) {
+    this.client = client;
+
+    // Require user authorization for calendar operations
+    if (!client.hasUserToken()) {
+      throw new Error(
+        "User authorization required for calendar access. " +
+        "Run 'feishu-agent auth' to authorize with your Feishu account."
+      );
+    }
+  }
+
+  /**
+   * List all calendars for the authenticated user
+   * Uses user_access_token if available
+   */
+  async listCalendars(pageSize: number = 500, pageToken?: string): Promise<ListCalendarsResponse["data"]> {
+    const params: Record<string, string> = {
+      page_size: pageSize.toString(),
+    };
+    if (pageToken) params.page_token = pageToken;
+
+    // Use user token if available to get user's personal calendars
+    const res = await this.client.get<ListCalendarsResponse["data"]>(
+      "/open-apis/calendar/v4/calendars",
+      params,
+      true // useUserToken = true
+    );
+    return res;
+  }
+
+  /**
+   * Get the primary calendar for the authenticated user
+   */
+  async getPrimaryCalendar(): Promise<string> {
+    const calendars = await this.listCalendars();
+    const primary = calendars.calendar_list.find((c) => c.type === "primary");
+
+    if (primary) return primary.calendar_id;
+    throw new Error("Primary calendar not found");
+  }
+
+  /**
+   * List events for a specific calendar
+   */
+  async listEvents(
+    calendarId: string,
+    options?: {
+      pageSize?: number;
+      pageToken?: string;
+      startTime?: string;
+      endTime?: string;
+    }
+  ): Promise<ListEventsResponse["data"]> {
+    const params: Record<string, string> = {
+      page_size: (options?.pageSize || 500).toString(),
+    };
+
+    if (options?.pageToken) params.page_token = options.pageToken;
+    if (options?.startTime) params.start_time = options.startTime;
+    if (options?.endTime) params.end_time = options.endTime;
+
+    const res = await this.client.get<ListEventsResponse["data"]>(
+      `/open-apis/calendar/v4/calendars/${calendarId}/events`,
+      params,
+      true // useUserToken = true
+    );
+    return res;
+  }
+
+  /**
+   * Get attendees for a specific event
+   */
+  async getEventAttendees(calendarId: string, eventId: string): Promise<CalendarAttendee[]> {
+    const res = await this.client.get<{ items: CalendarAttendee[] }>(
+      `/open-apis/calendar/v4/calendars/${calendarId}/events/${eventId}/attendees`,
+      {},
+      true // useUserToken = true
+    );
+    return res.items || [];
+  }
+
+  /**
+   * Get details of a specific event
+   */
+  async getEvent(calendarId: string, eventId: string): Promise<CalendarEvent> {
+    const res = await this.client.get<{ event: CalendarEvent }>(
+      `/open-apis/calendar/v4/calendars/${calendarId}/events/${eventId}`,
+      { user_id_type: "union_id" },
+      true // useUserToken = true
+    );
+    return res.event;
+  }
+
+  /**
+   * List attendees of a specific event
+   */
+  async listEventAttendees(
+    calendarId: string,
+    eventId: string,
+    options?: {
+      pageSize?: number;
+      pageToken?: string;
+    }
+  ): Promise<{ items: CalendarAttendee[]; page_token: string; has_more: boolean }> {
+    const params: Record<string, string> = {
+      page_size: (options?.pageSize || 50).toString(),
+    };
+    if (options?.pageToken) params.page_token = options.pageToken;
+
+    const res = await this.client.get<{ items: CalendarAttendee[]; page_token: string; has_more: boolean }>(
+      `/open-apis/calendar/v4/calendars/${calendarId}/events/${eventId}/attendees`,
+      params,
+      true // useUserToken = true
+    );
+    return res;
+  }
+
+  /**
+   * Create a new event
+   */
+  async createEvent(
+    calendarId: string,
+    event: {
+      summary: string;
+      description?: string;
+      startTime: CalendarTime;
+      endTime: CalendarTime;
+      attendeeUserIds?: string[];
+    }
+  ): Promise<CalendarEvent> {
+    // Step 1: Create the event
+    const body: Record<string, any> = {
+      summary: event.summary,
+      description: event.description,
+      start_time: event.startTime,
+      end_time: event.endTime,
+    };
+
+    const res = await this.client.post<CreateEventResponse["data"]>(
+      `/open-apis/calendar/v4/calendars/${calendarId}/events`,
+      body,
+      { user_id_type: "union_id" },
+      true
+    );
+
+    const createdEvent = res.event;
+
+    // Step 2: Add attendees if specified
+    if (event.attendeeUserIds && event.attendeeUserIds.length > 0) {
+      await this.client.post(
+        `/open-apis/calendar/v4/calendars/${calendarId}/events/${createdEvent.event_id}/attendees`,
+        { attendees: event.attendeeUserIds.map(id => ({ type: "user", user_id: id })) },
+        { user_id_type: "union_id" },
+        true
+      );
+    }
+
+    return createdEvent;
+  }
+
+  /**
+   * Delete an event
+   */
+  async deleteEvent(calendarId: string, eventId: string): Promise<void> {
+    await this.client.request(
+      `/open-apis/calendar/v4/calendars/${calendarId}/events/${eventId}`,
+      { method: "DELETE" },
+      true // useUserToken = true
+    );
+  }
+
+  /**
+   * Create a secondary calendar
+   */
+  async createCalendar(payload: CreateCalendarPayload): Promise<string> {
+    const res = await this.client.post<CreateCalendarResponse["data"]>(
+      "/open-apis/calendar/v4/calendars",
+      payload,
+      undefined,
+      true // useUserToken = true
+    );
+    return res.calendar.calendar_id;
+  }
+
+  /**
+   * Get free/busy information for a user
+   */
+  async getUserFreeBusy(userId: string, timeMin: string, timeMax: string): Promise<FreeBusyResponse["data"]> {
+    const body = {
+      time_min: timeMin,
+      time_max: timeMax,
+      user_id: userId
+    };
+
+    // Assume union_id (starts with on_) or user_id, default to union_id
+    let userIdType = "union_id";
+    if (userId.startsWith("on_")) userIdType = "union_id";
+
+    const res = await this.client.post<FreeBusyResponse["data"]>(
+      "/open-apis/calendar/v4/freebusy/list",
+      body,
+      { user_id_type: userIdType },
+      true // useUserToken = true
+    );
+    return res;
+  }
+
+  /**
+   * Update an event
+   */
+  async updateEvent(
+    calendarId: string,
+    eventId: string,
+    updates: {
+      summary?: string;
+      description?: string;
+      startTime?: CalendarTime;
+      endTime?: CalendarTime;
+      attendees?: CalendarAttendee[];
+    }
+  ): Promise<CalendarEvent> {
+    const body: Record<string, any> = {};
+    if (updates.summary !== undefined) body.summary = updates.summary;
+    if (updates.description !== undefined) body.description = updates.description;
+    if (updates.startTime !== undefined) body.start_time = updates.startTime;
+    if (updates.endTime !== undefined) body.end_time = updates.endTime;
+    if (updates.attendees !== undefined) body.attendees = updates.attendees;
+
+    const res = await this.client.post<CreateEventResponse["data"]>(
+      `/open-apis/calendar/v4/calendars/${calendarId}/events/${eventId}`,
+      body,
+      undefined,
+      true // useUserToken = true
+    );
+    return res.event;
+  }
+
+  /**
+   * Share a calendar with a user
+   */
+  async shareCalendarWithUser(
+    calendarId: string,
+    userId: string,
+    role: "reader" | "writer" | "free_busy_reader" = "reader"
+  ): Promise<void> {
+    throw new Error(
+      "Calendar sharing requires user authorization. " +
+      "Please share the calendar manually in Feishu app."
+    );
+  }
+
+  /**
+   * Get calendar share link
+   */
+  getCalendarShareLink(calendarId: string): string {
+    return `https://applink.feishu.cn/client/calendar/?calendarId=${encodeURIComponent(calendarId)}`;
+  }
+
+}

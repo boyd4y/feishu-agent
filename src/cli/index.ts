@@ -1,45 +1,66 @@
 #!/usr/bin/env bun
-import { parseArgs } from "node:util";
-import { initCommand } from "./commands/init";
-import { configCommand } from "./commands/config";
+import { Command } from "commander";
+import { setupCommand } from "./commands/setup";
+import { authCommand } from "./commands/auth";
+import { whoamiCommand } from "./commands/whoami";
+import { loadConfig } from "../core/config";
+import { createConfigCommands } from "./commands/config";
+import { createCalendarCommands } from "./commands/calendar";
+import { createTodoCommands } from "./commands/todo";
+import { createContactCommands } from "./commands/contact";
 
 async function main() {
-  const { values, positionals } = parseArgs({
-    allowPositionals: true,
-    strict: false,
-    options: {
-      "app-id": { type: "string" },
-      "app-secret": { type: "string" },
-    },
-  });
+  const program = new Command();
 
-  const command = positionals[0];
+  program
+    .name("feishu-agent")
+    .description("Feishu Agent CLI for AI assistants")
+    .version("1.0.0");
 
-  switch (command) {
-    case "init":
-      // Pass the parsed options to the init command (requires refactor)
-      // For now, we will update initCommand signature or inject into process.env or similar?
-      // Better: Update initCommand to accept options.
-      await initCommand(positionals.slice(1), {
-          appId: values["app-id"],
-          appSecret: values["app-secret"],
-      });
-      break;
-    case "config":
-      await configCommand(positionals.slice(1));
-      break;
-    default:
-      console.log("Usage: feishu-agent <command> [args]");
-      console.log("Options:");
-      console.log("  --app-id <id>       Feishu App ID");
-      console.log("  --app-secret <key>  Feishu App Secret");
-      console.log("Commands:");
-      console.log("  init <url|path>     Initialize schema from Feishu Base URL");
-      console.log("  config <subcmd>     Manage global configuration");
-      break;
-  }
+  program
+    .command("setup")
+    .description("Initialize configuration")
+    .action(setupCommand);
+
+  program
+    .command("auth")
+    .description("Authenticate with Feishu OAuth")
+    .action(authCommand);
+
+  program
+    .command("whoami")
+    .description("Show current user info")
+    .action(whoamiCommand);
+
+  // Load config for commands that need it
+  const config = await loadConfig();
+
+  // Config subcommand group
+  const configCmd = program
+    .command("config")
+    .description("Manage configuration");
+  createConfigCommands(configCmd);
+
+  // Calendar subcommand group
+  const calendarCmd = program
+    .command("calendar")
+    .description("Manage calendar events");
+  createCalendarCommands(calendarCmd, config);
+
+  // Todo subcommand group
+  const todoCmd = program
+    .command("todo")
+    .description("Manage todos");
+  createTodoCommands(todoCmd, config);
+
+  // Contact subcommand group
+  const contactCmd = program
+    .command("contact")
+    .description("Manage contacts");
+  createContactCommands(contactCmd, config);
+
+  await program.parseAsync();
 }
-
 
 main().catch((err) => {
   console.error("Error:", err.message);
