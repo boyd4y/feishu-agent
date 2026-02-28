@@ -8,6 +8,7 @@ import { createConfigCommands } from "./commands/config";
 import { createCalendarCommands } from "./commands/calendar";
 import { createTodoCommands } from "./commands/todo";
 import { createContactCommands } from "./commands/contact";
+import pkg from "../../package.json" with { type: "json" };
 
 async function main() {
   const program = new Command();
@@ -15,7 +16,7 @@ async function main() {
   program
     .name("feishu-agent")
     .description("Feishu Agent CLI for AI assistants")
-    .version("1.0.0");
+    .version(pkg.version);
 
   program
     .command("setup")
