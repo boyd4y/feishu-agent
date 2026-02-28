@@ -19,9 +19,9 @@ interface UserAccessTokenResponse {
   };
 }
 
-export async function authCommand(args: string[]) {
+export async function authCommand() {
   const { values } = parseArgs({
-    args,
+    args: process.argv.slice(3), // Get args from command line
     strict: false,
     options: {
       port: { type: "string", default: "3000" },
