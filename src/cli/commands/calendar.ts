@@ -218,8 +218,8 @@ async function handleCreateEvent(config: FeishuConfig, options: CalendarOptions)
     process.exit(1);
   }
 
-  // Resolve attendee names to union_ids
-  let attendeeUnionIds: string[] = [];
+  // Resolve attendee names to open_ids
+  let attendeeOpenIds: string[] = [];
   if (attendeeName && attendeeName.length > 0) {
     console.log("\n🔍 Resolving attendee names...");
     for (const name of attendeeName) {
@@ -235,14 +235,14 @@ async function handleCreateEvent(config: FeishuConfig, options: CalendarOptions)
         });
         console.log("  Using the first match.");
       }
-      attendeeUnionIds.push(results[0].union_id);
-      console.log(`  ✓ "${name}" -> ${results[0].name} (${results[0].union_id})`);
+      attendeeOpenIds.push(results[0].open_id || results[0].union_id);
+      console.log(`  ✓ "${name}" -> ${results[0].name} (${results[0].open_id || results[0].union_id})`);
     }
   }
 
-  // Also support direct attendee IDs (assuming they are union_ids)
+  // Also support direct attendee IDs (assuming they are open_ids or union_ids)
   if (attendee && attendee.length > 0) {
-    attendeeUnionIds = [...attendeeUnionIds, ...attendee];
+    attendeeOpenIds = [...attendeeOpenIds, ...attendee];
   }
 
   // Get calendar
@@ -265,15 +265,15 @@ async function handleCreateEvent(config: FeishuConfig, options: CalendarOptions)
     summary,
     startTime: { timestamp: startTimestamp },
     endTime: { timestamp: endTimestamp },
-    attendeeUserIds: attendeeUnionIds.length > 0 ? attendeeUnionIds : undefined,
+    attendeeOpenIds: attendeeOpenIds.length > 0 ? attendeeOpenIds : undefined,
   });
 
   console.log("\n✅ Event created!");
   console.log(`   Title: ${summary}`);
   console.log(`   Time: ${new Date(parseInt(startTimestamp) * 1000).toLocaleString()} - ${new Date(parseInt(endTimestamp) * 1000).toLocaleString()}`);
   console.log(`   Calendar ID: ${targetCalendarId}`);
-  if (attendeeUnionIds.length > 0) {
-    console.log(`   Attendees: ${attendeeUnionIds.join(", ")}`);
+  if (attendeeOpenIds.length > 0) {
+    console.log(`   Attendees: ${attendeeOpenIds.join(", ")}`);
   }
 }
 
