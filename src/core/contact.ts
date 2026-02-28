@@ -23,6 +23,7 @@ export class ContactManager {
       return cachedResults.map(c => ({
         user_id: c.user_id,
         union_id: c.union_id,
+        open_id: c.open_id,
         name: c.name,
         email: c.email,
       }));
@@ -49,6 +50,7 @@ export class ContactManager {
           name: user.name,
           email: user.email,
           user_id: user.user_id,
+          open_id: user.open_id,
         });
       }
     }

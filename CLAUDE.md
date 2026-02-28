@@ -66,3 +66,21 @@ Single global config at `~/.feishu-agent/config.json`:
 - Core modules (`CalendarManager`, `ContactManager`, etc.) receive `FeishuClient` as dependency
 - CLI commands load config from `loadConfig()` and pass to managers
 - Tests use `global.fetch` mocking
+
+### Important: Feishu User ID Types
+
+**⚠️ Critical:** Feishu uses three different user ID types. Using the wrong one causes API errors.
+
+| ID Type | Example | Usage |
+|---------|---------|-------|
+| `user_id` | `winston` | Internal username |
+| `union_id` | `on_xxx` | Calendar API query params, FreeBusy API |
+| `open_id` | `ou_xxx` | **Calendar Attendees API** (easy to miss!) |
+
+**See `docs/feishu-user-id-types.md` for detailed guidance.**
+
+Key rules:
+1. Always cache all three ID types when fetching user info
+2. Calendar Create Event: use `union_id` with `user_id_type: "union_id"` param
+3. Calendar Add Attendees: **must use `open_id`** in the `user_id` field
+4. Error messages mentioning "invalid union_id" often mean "wrong ID type"

@@ -63,7 +63,7 @@ export class AuthManager {
   /**
    * Get current user info from token
    */
-  async getCurrentUser(): Promise<{ user_id: string; name: string } | null> {
+  async getCurrentUser(): Promise<{ user_id: string; union_id: string; open_id: string; name: string } | null> {
     if (!this.userToken) {
       return null;
     }
@@ -80,6 +80,8 @@ export class AuthManager {
       if (data.code === 0 && data.data) {
         return {
           user_id: data.data.user_id,
+          union_id: data.data.union_id,
+          open_id: data.data.open_id,
           name: data.data.name,
         };
       }

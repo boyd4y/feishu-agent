@@ -142,7 +142,7 @@ export class CalendarManager {
       description?: string;
       startTime: CalendarTime;
       endTime: CalendarTime;
-      attendeeUserIds?: string[]; // union_ids
+      attendeeOpenIds?: string[]; // open_ids for attendees API
       checkConflict?: boolean; // Whether to check for time conflicts
     }
   ): Promise<CalendarEvent> {
@@ -169,11 +169,11 @@ export class CalendarManager {
     const createdEvent = res.event;
 
     // Step 3: Add attendees if specified
-    if (event.attendeeUserIds && event.attendeeUserIds.length > 0) {
+    if (event.attendeeOpenIds && event.attendeeOpenIds.length > 0) {
       await this.client.post(
         `/open-apis/calendar/v4/calendars/${calendarId}/events/${createdEvent.event_id}/attendees`,
         {
-          attendees: event.attendeeUserIds.map(id => ({
+          attendees: event.attendeeOpenIds.map(id => ({
             type: "user",
             user_id: id,
           })),
@@ -250,6 +250,7 @@ export class CalendarManager {
     const timeMin = this.toRFC3339(startTime);
     const timeMax = this.toRFC3339(endTime);
 
+    // Use union_id for freebusy API (same as user_id from authen API)
     const freeBusy = await this.getUserFreeBusy(currentUser.user_id, timeMin, timeMax);
 
     // Check if there are any busy slots

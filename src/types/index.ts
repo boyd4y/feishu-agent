@@ -166,6 +166,7 @@ export interface FreeBusyResponse {
 export interface UserInfo {
   user_id: string;
   union_id: string;
+  open_id?: string;
   name: string;
   en_name?: string;
   email?: string;

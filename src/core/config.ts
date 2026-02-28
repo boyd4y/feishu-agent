@@ -7,6 +7,7 @@ export interface ContactCacheEntry {
   email?: string;
   user_id?: string; // Also store user_id for lookup
   union_id?: string;
+  open_id?: string; // Store open_id for calendar attendees API
 }
 
 export interface FeishuConfig {
