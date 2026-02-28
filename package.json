@@ -1,23 +1,20 @@
 {
   "name": "@teamclaw/feishu-agent",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Feishu Agent CLI for AI assistants",
   "type": "module",
   "private": false,
   "bin": {
-    "feishu_agent": "src/index.ts"
+    "feishu-agent": "./dist/cli.js"
   },
   "scripts": {
     "test": "bun test",
-    "start:mcp": "bun run src/mcp/server.ts",
-    "start": "bun run src/index.ts",
-    "build": "bun build ./src/index.ts --compile --outfile=feishu_agent"
+    "start": "bun run src/cli/index.ts",
+    "build": "bun build ./src/cli/index.ts --target=bun --compile --outfile=dist/cli.js",
+    "prepublishOnly": "bun run build"
   },
   "devDependencies": {
     "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
@@ -28,7 +25,7 @@
     "bun": ">=1.0.0"
   },
   "files": [
-    "src",
+    "dist",
     "README.md"
   ],
   "keywords": [
