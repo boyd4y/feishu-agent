@@ -142,7 +142,7 @@ export class CalendarManager {
       description?: string;
       startTime: CalendarTime;
       endTime: CalendarTime;
-      attendeeOpenIds?: string[]; // open_ids for attendees
+      attendeeUserIds?: string[]; // union_ids for attendees
       checkConflict?: boolean; // Whether to check for time conflicts
     }
   ): Promise<CalendarEvent> {
@@ -151,22 +151,13 @@ export class CalendarManager {
       await this.checkTimeConflict(event.startTime, event.endTime);
     }
 
-    // Step 2: Create the event with attendees
+    // Step 2: Create the event (without attendees)
     const body: Record<string, any> = {
       summary: event.summary,
       description: event.description,
       start_time: event.startTime,
       end_time: event.endTime,
     };
-
-    // Add attendees directly in the create request
-    if (event.attendeeOpenIds && event.attendeeOpenIds.length > 0) {
-      body.attendees = event.attendeeOpenIds.map(id => ({
-        type: "user",
-        user_id: id,
-        optional: false,
-      }));
-    }
 
     const res = await this.client.post<CreateEventResponse["data"]>(
       `/open-apis/calendar/v4/calendars/${calendarId}/events`,
@@ -175,7 +166,23 @@ export class CalendarManager {
       true
     );
 
-    return res.event;
+    const createdEvent = res.event;
+
+    // Step 3: Add attendees if specified (separate API call)
+    if (event.attendeeUserIds && event.attendeeUserIds.length > 0) {
+      await this.client.post(
+        `/open-apis/calendar/v4/calendars/${calendarId}/events/${createdEvent.event_id}/attendees`,
+        {
+          attendees: event.attendeeUserIds.map(id => ({
+            type: "user",
+            user_id: id,
+          })),
+        },
+        { user_id_type: "union_id" }
+      );
+    }
+
+    return createdEvent;
   }
 
   /**
