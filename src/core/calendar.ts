@@ -151,22 +151,13 @@ export class CalendarManager {
       await this.checkTimeConflict(event.startTime, event.endTime);
     }
 
-    // Step 2: Create the event with attendees in one request
+    // Step 2: Create the event
     const body: Record<string, any> = {
       summary: event.summary,
       description: event.description,
       start_time: event.startTime,
       end_time: event.endTime,
     };
-
-    // Add attendees directly in the create request
-    if (event.attendeeOpenIds && event.attendeeOpenIds.length > 0) {
-      body.attendees = event.attendeeOpenIds.map(id => ({
-        type: "user",
-        user_id: id,
-        user_id_type: "open_id",
-      }));
-    }
 
     const res = await this.client.post<CreateEventResponse["data"]>(
       `/open-apis/calendar/v4/calendars/${calendarId}/events`,
@@ -175,7 +166,24 @@ export class CalendarManager {
       true
     );
 
-    return res.event;
+    const createdEvent = res.event;
+
+    // Step 3: Add attendees using separate API call
+    if (event.attendeeOpenIds && event.attendeeOpenIds.length > 0) {
+      await this.client.post(
+        `/open-apis/calendar/v4/calendars/${calendarId}/events/${createdEvent.event_id}/attendees`,
+        {
+          attendees: event.attendeeOpenIds.map(id => ({
+            type: "user",
+            user_id: id,
+          })),
+          need_notification: true,
+        },
+        {} // No user_id_type for attendees API
+      );
+    }
+
+    return createdEvent;
   }
 
   /**
