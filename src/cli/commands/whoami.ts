@@ -17,6 +17,7 @@ export async function whoamiCommand() {
     appId: config.appId,
     appSecret: config.appSecret,
     userAccessToken: config.userAccessToken,
+    refreshToken: config.refreshToken,
   });
 
   // Check if user has authorized

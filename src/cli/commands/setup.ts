@@ -198,7 +198,12 @@ export async function setupCommand() {
   console.log(`Detected Base Token: ${baseToken}`);
   console.log("Fetching schema...");
 
-  const client = new FeishuClient({ appId, appSecret, userAccessToken: access_token });
+  const client = new FeishuClient({
+    appId,
+    appSecret,
+    userAccessToken: access_token,
+    refreshToken: refresh_token,
+  });
   const engine = new IntrospectionEngine(client);
 
   try {
