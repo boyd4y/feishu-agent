@@ -5,7 +5,10 @@
 
 set -e
 
-SKILL_DIR="skills/feishu-agent"
+# 获取脚本所在目录的绝对路径
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+SKILL_DIR="$PROJECT_DIR/skills/feishu-agent"
 SKILL_FILE="$SKILL_DIR/SKILL.md"
 
 echo "🚀 Feishu Agent Skill 发布工具"
