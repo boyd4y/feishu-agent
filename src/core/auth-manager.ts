@@ -201,17 +201,14 @@ export class AuthManager {
 
       // Global config
       const globalConfigPath = join(homedir(), ".feishu-agent", "config.json");
-      try {
-        const content = await readFile(globalConfigPath, "utf-8");
-        const config = JSON.parse(content);
-        config.userAccessToken = token.accessToken;
-        config.refreshToken = token.refreshToken;
-        await writeFile(globalConfigPath, JSON.stringify(config, null, 2));
-      } catch {
-        // Global config doesn't exist either
-      }
-    } catch {
-      // Ignore save errors - token will still work until next restart
+      const content = await readFile(globalConfigPath, "utf-8");
+      const config = JSON.parse(content);
+      config.userAccessToken = token.accessToken;
+      config.refreshToken = token.refreshToken;
+      await writeFile(globalConfigPath, JSON.stringify(config, null, 2));
+    } catch (error) {
+      console.error("Warning: Failed to save updated tokens to config file.");
+      console.error("Tokens will need to be refreshed again on next run.");
     }
   }
 }
