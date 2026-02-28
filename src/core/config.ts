@@ -79,7 +79,7 @@ export async function saveGlobalConfig(config: Partial<FeishuConfig>): Promise<v
 
 /**
  * Saves a contact entry to the contact cache.
- * Key is union_id, value is name, email, and open_id.
+ * Key is union_id, value is name, email, and user_id.
  */
 export async function saveContactToCache(unionId: string, entry: ContactCacheEntry): Promise<void> {
   const cachePath = getContactCachePath();

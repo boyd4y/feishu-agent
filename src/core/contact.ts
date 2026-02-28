@@ -49,7 +49,6 @@ export class ContactManager {
           name: user.name,
           email: user.email,
           user_id: user.user_id,
-          open_id: user.open_id,
         });
       }
     }

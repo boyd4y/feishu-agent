@@ -176,9 +176,9 @@ async function handleListEvents(config: FeishuConfig, calendarId?: string) {
       if (attendees && attendees.length > 0) {
         const attendeeDisplay = attendees.map(a => {
           if (a.type === "user" && a.user_id) {
-            // Lookup attendee name from cache by open_id or union_id
+            // Lookup attendee name from cache by union_id or user_id
             for (const [unionId, entry] of Object.entries(contactCache)) {
-              if (entry.open_id === a.user_id || unionId === a.user_id) {
+              if (entry.user_id === a.user_id || unionId === a.user_id) {
                 return `${entry.name}${a.is_optional ? " (optional)" : ""}`;
               }
             }

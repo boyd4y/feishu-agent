@@ -142,7 +142,7 @@ export class CalendarManager {
       description?: string;
       startTime: CalendarTime;
       endTime: CalendarTime;
-      attendeeUserIds?: string[];
+      attendeeUserIds?: string[]; // union_ids
       checkConflict?: boolean; // Whether to check for time conflicts
     }
   ): Promise<CalendarEvent> {
@@ -168,13 +168,17 @@ export class CalendarManager {
 
     const createdEvent = res.event;
 
-    // Step 2: Add attendees if specified
+    // Step 3: Add attendees if specified
     if (event.attendeeUserIds && event.attendeeUserIds.length > 0) {
       await this.client.post(
         `/open-apis/calendar/v4/calendars/${calendarId}/events/${createdEvent.event_id}/attendees`,
-        { attendees: event.attendeeUserIds.map(id => ({ type: "user", user_id: id })) },
-        { user_id_type: "union_id" },
-        true
+        {
+          attendees: event.attendeeUserIds.map(id => ({
+            type: "user",
+            user_id: id,
+          })),
+        },
+        {}
       );
     }
 
