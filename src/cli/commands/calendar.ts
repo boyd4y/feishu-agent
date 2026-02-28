@@ -3,6 +3,7 @@ import { FeishuClient } from "../../core/client";
 import { CalendarManager } from "../../core/calendar";
 import { ContactManager } from "../../core/contact";
 import { loadContactCache } from "../../core/config";
+import { parseTime, getTimeRange } from "../../core/time";
 import { FeishuConfig } from "../../types";
 
 interface CalendarOptions {
@@ -118,18 +119,6 @@ async function handleListCalendars(config: FeishuConfig) {
   }
 }
 
-/**
- * Format date to Feishu API compatible format (YYYY-MM-DD HH:mm)
- */
-function formatTime(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
-}
-
 async function handleListEvents(config: FeishuConfig, calendarId?: string, timeMin?: string, timeMax?: string) {
   if (!config.appId || !config.appSecret || !config.userAccessToken) {
     console.error("Error: Authorization required. Run 'feishu-agent auth'.");
@@ -157,13 +146,25 @@ async function handleListEvents(config: FeishuConfig, calendarId?: string, timeM
   let effectiveTimeMin = timeMin;
   let effectiveTimeMax = timeMax;
 
-  if (!effectiveTimeMin) {
-    effectiveTimeMin = formatTime(new Date());
-  }
-  if (!effectiveTimeMax) {
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    effectiveTimeMax = formatTime(nextWeek);
+  if (!effectiveTimeMin || !effectiveTimeMax) {
+    const defaultRange = getTimeRange(7);
+    effectiveTimeMin = effectiveTimeMin || defaultRange.start;
+    effectiveTimeMax = effectiveTimeMax || defaultRange.end;
+  } else {
+    // Parse and validate user-provided time strings
+    try {
+      effectiveTimeMin = parseTime(effectiveTimeMin);
+      effectiveTimeMax = parseTime(effectiveTimeMax);
+    } catch (error) {
+      console.error(`Error: ${error instanceof Error ? error.message : 'Invalid time format'}`);
+      process.exit(1);
+    }
+
+    // Validate time range order
+    if (parseInt(effectiveTimeMax) <= parseInt(effectiveTimeMin)) {
+      console.error("Error: End time must be after start time");
+      process.exit(1);
+    }
   }
 
   console.log(`\n📅 Events\n`);
@@ -288,8 +289,23 @@ async function handleCreateEvent(config: FeishuConfig, options: CalendarOptions)
     process.exit(1);
   }
 
-  const startTimestamp = Math.floor(new Date(start).getTime() / 1000).toString();
-  const endTimestamp = Math.floor(new Date(end).getTime() / 1000).toString();
+  // Parse and validate time strings
+  let startTimestamp: string;
+  let endTimestamp: string;
+
+  try {
+    startTimestamp = parseTime(start);
+    endTimestamp = parseTime(end);
+  } catch (error) {
+    console.error(`Error: ${error instanceof Error ? error.message : 'Invalid time format'}`);
+    process.exit(1);
+  }
+
+  // Validate time range order
+  if (parseInt(endTimestamp) <= parseInt(startTimestamp)) {
+    console.error("Error: End time must be after start time");
+    process.exit(1);
+  }
 
   const event = await calendarManager.createEvent(targetCalendarId, {
     summary,
