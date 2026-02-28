@@ -48,6 +48,8 @@ describe("CalendarManager", () => {
           msg: "success",
           data: {
             user_id: "test_user_id",
+            union_id: "test_union_id",
+            open_id: "test_open_id",
             name: "Test User",
           }
         })));
@@ -350,6 +352,8 @@ describe("CalendarManager", () => {
           msg: "success",
           data: {
             user_id: "test_user_id",
+            union_id: "test_union_id",
+            open_id: "test_open_id",
             name: "Test User",
           }
         })));

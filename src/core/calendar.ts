@@ -241,7 +241,7 @@ export class CalendarManager {
   ): Promise<void> {
     // Get current user ID from token
     const currentUser = await this.client.getCurrentUser();
-    if (!currentUser?.user_id) {
+    if (!currentUser?.union_id) {
       // If we can't get user info, skip conflict check
       return;
     }
@@ -250,8 +250,8 @@ export class CalendarManager {
     const timeMin = this.toRFC3339(startTime);
     const timeMax = this.toRFC3339(endTime);
 
-    // Use union_id for freebusy API (same as user_id from authen API)
-    const freeBusy = await this.getUserFreeBusy(currentUser.user_id, timeMin, timeMax);
+    // Use union_id for freebusy API
+    const freeBusy = await this.getUserFreeBusy(currentUser.union_id, timeMin, timeMax);
 
     // Check if there are any busy slots
     if (freeBusy.freebusy_list && freeBusy.freebusy_list.length > 0) {
